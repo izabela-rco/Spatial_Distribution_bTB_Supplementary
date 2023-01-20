@@ -1,0 +1,369 @@
+---
+title: "Spatial distribution of bovine tuberculosis in Minas Gerais under the PNCEBT, 2014 to 2018"
+output:
+  flexdashboard::flex_dashboard:
+    theme: 
+      version: 4
+      bootswatch: minty
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+library(flexdashboard)
+# Install thematic and un-comment for themed static plots (i.e., ggplot2)
+# thematic::thematic_rmd()
+```
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+## Leitura e preparção dos dados
+
+require(readxl)
+dados <- read_excel("DadosAnos.xlsx", na="NA")
+tub_final <- read_excel("TubFinal.xlsx", na="NA")
+
+require(sf)
+Mg <- st_read("MG_Municipios_2019.shp")
+
+SpMg <- merge(Mg, tub_final, by = "CD_MUN", all.x = TRUE)
+```
+
+2014-2018
+=======================================================================
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Cases of bTB - 2014-2018
+
+```{r MapMinas}
+require(ggplot2)
+map <- ggplot(SpMg) + 
+  geom_sf(aes(fill=CFTA),
+          color = "black",
+          linetype = 1,
+          lwd = 0.1) +
+  scale_fill_viridis_c(option = "B", direction=-1, alpha=1)
+map + theme_bw()
+
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Total number of positive animals for bTB
+
+```{r}
+valueBox(sum(dados$Soma_f), color = "warning")
+```
+
+### Mean of cases of bTB per year
+
+```{r}
+require(dplyr)
+require(plotly)
+tub_g <- dados%>%
+  group_by(Ano)%>%
+  summarize(CFTA = round(mean(Soma_f),2))
+
+g <- ggplot(tub_g, aes(x=Ano, y=CFTA)) +
+  geom_point() + geom_line() + theme_bw()
+
+ggplotly(g)
+```
+
+2014
+=======================================================================
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Cases of bTB in 2014
+
+```{r Ano14}
+## Dados por ano
+tub14 <- filter(dados, Ano==2014)
+colnames(tub14)[4] <- "tub_14"
+colnames(tub14)[5] <- "sif_14"
+
+tub15 <- filter(dados, Ano==2015)
+colnames(tub15)[4] <- "tub_15"
+colnames(tub15)[5] <- "sif_15"
+
+tub16 <- filter(dados, Ano==2016)
+colnames(tub16)[4] <- "tub_16"
+colnames(tub16)[5] <- "sif_16"
+
+tub17 <- filter(dados, Ano==2017)
+colnames(tub17)[4] <- "tub_17"
+colnames(tub17)[5] <- "sif_17"
+
+tub18 <- filter(dados, Ano==2018)
+colnames(tub18)[4] <- "tub_18"
+colnames(tub18)[5] <- "sif_18"
+
+## Concatenando as informações com o shape (por ano)
+
+## 2014
+SpMg14 <- merge(Mg, tub14, by = "CD_MUN", all.x = TRUE)
+
+## 2015
+SpMg15 <- merge(Mg, tub15, by = "CD_MUN", all.x = TRUE)
+
+## 2016
+SpMg16 <- merge(Mg, tub16, by = "CD_MUN", all.x = TRUE)
+
+## 2017
+SpMg17 <- merge(Mg, tub17, by = "CD_MUN", all.x = TRUE)
+
+## 2018
+SpMg18 <- merge(Mg, tub18, by = "CD_MUN", all.x = TRUE)
+
+## Plot do mapa
+
+map14 <- ggplot(SpMg14) + 
+  geom_sf(aes(fill=tub_14),
+          color = "black",
+          linetype = 1,
+          lwd = 0.1) +
+  scale_fill_viridis_c(option = "B", direction=-1, alpha=1)
+map14 + theme_bw()
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Total number of positive animals for bTB in 2014
+
+```{r total}
+valueBox(sum(tub14$tub_14), color = "warning")
+```
+
+### Difference between the number of animals with suggestive lesions and the number of positive animals - The 10 cities with the biggest discrepancy
+
+```{r}
+tub14 <- data.frame(tub14, "DIF"=tub14$tub_14-tub14$sif_14)
+
+#Max_mun14 <- tub14[tub14$tub_14>31,c(3,4,5,11)]
+Max_mun14 <- dplyr::arrange(tub14, DIF)[1:10,c(3,4,5,11)]
+colnames(Max_mun14) <- c("Mun","CFTA","AIA","DIF")
+
+DT::datatable(Max_mun14, rownames=F, options=list(paging=F))
+```
+
+2015
+=======================================================================
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Cases of bTB in 2015
+```{r Ano2015}
+map15 <- ggplot(SpMg15) + 
+  geom_sf(aes(fill=tub_15),
+          color = "black",
+          linetype = 1,
+          lwd = 0.1) +
+  scale_fill_viridis_c(option = "B", direction=-1, alpha=1)
+map15 + theme_bw()
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Total number of positive animals for bTB in 2015
+
+```{r}
+valueBox(sum(tub15$tub_15), color = "warning")
+```
+
+### Difference between the number of animals with suggestive lesions and the number of positive animals - The 10 cities with the biggest discrepancy
+
+```{r}
+tub15 <- data.frame(tub15, "DIF"=tub15$tub_15-tub15$sif_15)
+
+#Max_mun15 <- tub15[tub15$tub_15>27,c(3,4,5)]
+Max_mun15 <- dplyr::arrange(tub15, DIF)[1:10,c(3,4,5,11)]
+colnames(Max_mun15) <- c("Mun","CFTA","AIA","DIF")
+
+DT::datatable(Max_mun15, rownames=F, options=list(paging=F))
+```
+
+2016
+=======================================================================
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Cases of bTB in 2016
+```{r}
+map16 <- ggplot(SpMg16) + 
+  geom_sf(aes(fill=tub_16),
+          color = "black",
+          linetype = 1,
+          lwd = 0.1) +
+  scale_fill_viridis_c(option = "B", direction=-1, alpha=1)
+map16 + theme_bw()
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Total number of positive animals for bTB in 2016
+
+```{r}
+valueBox(sum(tub16$tub_16), color = "warning")
+```
+
+### Difference between the number of animals with suggestive lesions and the number of positive animals - The 10 cities with the biggest discrepancy
+
+```{r}
+tub16 <- data.frame(tub16, "DIF"=tub16$tub_16-tub16$sif_16)
+
+Max_mun16 <- dplyr::arrange(tub16, DIF)[1:10,c(3,4,5,11)]
+colnames(Max_mun16) <- c("Mun","CFTA","AIA","DIF")
+#Max_mun16 <- tub16[tub16$tub_16>14,c(3,4,5)]
+
+DT::datatable(Max_mun16, rownames=F, options=list(paging=F))
+```
+
+2017
+=======================================================================
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Cases of bTB in 2017
+```{r}
+map17 <- ggplot(SpMg17) + 
+  geom_sf(aes(fill=tub_17),
+          color = "black",
+          linetype = 1,
+          lwd = 0.1) +
+  scale_fill_viridis_c(option = "B", direction=-1, alpha=1)
+map17 + theme_bw()
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Total number of positive animals for bTB in 2017
+
+```{r}
+valueBox(sum(tub17$tub_17), color = "warning")
+```
+
+### Difference between the number of animals with suggestive lesions and the number of positive animals - The 10 cities with the biggest discrepancy
+
+```{r}
+tub17 <- data.frame(tub17, "DIF"=tub17$tub_17-tub17$sif_17)
+
+Max_mun17 <- dplyr::arrange(tub17, DIF)[1:10,c(3,4,5,11)]
+colnames(Max_mun17) <- c("Mun","CFTA","AIA","DIF")
+#Max_mun17 <- tub17[tub17$tub_17>14,c(3,4,5)]
+
+DT::datatable(Max_mun17, rownames=F, options=list(paging=F))
+```
+
+2018
+=======================================================================
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Cases of bTB in 2018
+```{r}
+map18 <- ggplot(SpMg18) + 
+  geom_sf(aes(fill=tub_18),
+          color = "black",
+          linetype = 1,
+          lwd = 0.1) +
+  scale_fill_viridis_c(option = "B", direction=-1, alpha=1)
+map18 + theme_bw()
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Total number of positive animals for bTB in 2018
+
+```{r}
+valueBox(sum(tub18$tub_18), color = "warning")
+```
+
+### Difference between the number of animals with suggestive lesions and the number of positive animals - The 10 cities with the biggest discrepancy
+
+```{r}
+tub18 <- data.frame(tub18, "DIF"=tub18$tub_18-tub18$sif_18)
+
+Max_mun18 <- dplyr::arrange(tub18, DIF)[1:10,c(3,4,5,11)]
+colnames(Max_mun18) <- c("Mun","CFTA","AIA","DIF")
+#Max_mun18 <- tub18[tub18$tub_18>14,c(3,4,5)]
+
+DT::datatable(Max_mun18, rownames=F, options=list(paging=F))
+```
+
+Descriptive measures
+=======================================================================
+
+Column
+-----------------------------------------------------------------------
+
+### Descriptive statistics (2008-2018)
+```{r EstDesc}
+desc1 <- fBasics::basicStats(tub_final$CFTA)
+desc2 <- fBasics::basicStats(tub_final$AIA)[[1]]
+desc3 <- fBasics::basicStats(tub_final$PPB)[[1]]
+desc4 <- fBasics::basicStats(tub_final$PER)[[1]]
+
+EstDesc <- data.frame("CFTA"=desc1,"AL"=desc2,"PPB"=desc3,"PER"=desc4)
+colnames(EstDesc)[1] <- "CFTA"
+
+DT::datatable(EstDesc, filter = "none", rownames=T, options=list(paging=F))
+```
+
+Column
+-----------------------------------------------------------------------
+
+### Difference between the number of animals with suggestive lesions and the number of positive animals - The 10 cities with the biggest discrepancy (2014 to 2018)
+```{r}
+## Diferença negativa (10 mais diferentes negativamente)
+dados2 <- data.frame(dados, "Dif"=dados$Soma_f-dados$SIF)
+mun1 <- filter(dados2, Dif==-107) #Uberaba
+mun2 <- filter(dados2, Dif==-85) #Unaí
+mun3 <- filter(dados2, Dif==-77) #Araxá
+mun4 <- filter(dados2, Dif==-51) #Patrocínio 2014
+mun5 <- filter(dados2, Dif==-48) #Patrocínio 2017
+mun6 <- filter(dados2, Dif==-44) #Patrocínio 2016 e Serra do Salitre 2015
+mun7 <- filter(dados2, Dif==-43) #Campo Florido 2015 Perdizes 2014
+mun8 <- filter(dados2, Dif==-40) #Patos de Minas
+
+Mun_neg <- data.frame(rbind(mun1,mun2,mun3,mun4,mun5,mun6,mun7,mun8))
+Mun_neg <- Mun_neg[,c(1:8,11)]
+colnames(Mun_neg) <- c("CD_MUN","ANO","MUN","CFTA","AL","FC","CH","MC","DIF")
+DT::datatable(Mun_neg, rownames=F, options=list(paging=F))
+```
+
+<!--### Municípios com maior número de bovinos com bTB segundo ano de notificação.
+```{r}
+A14 <- filter(tub14, tub_14==max(tub14$tub_14, na.rm = T))[,2:5]
+colnames(A14)[3:4] <- c("CFTA","AIA")
+
+A15 <- filter(tub15, tub_15==max(tub15$tub_15, na.rm = T))[,2:5]
+colnames(A15)[3:4] <- c("CFTA","AIA")
+
+A16 <- filter(tub16, tub_16==max(tub16$tub_16, na.rm = T))[,2:5]
+colnames(A16)[3:4] <- c("CFTA","AIA")
+
+A17 <- filter(tub17, tub_17==max(tub17$tub_17, na.rm = T))[,2:5]
+colnames(A17)[3:4] <- c("CFTA","AIA")
+
+A18 <- filter(tub18, tub_18==max(tub18$tub_18, na.rm = T))[,2:5]
+colnames(A18)[3:4] <- c("CFTA","AIA")
+
+Max_mun <- data.frame(rbind(A14,A15,A16,A17,A18))
+
+DT::datatable(Max_mun, rownames=F, options=list(paging=F))
+```
+
+-->
